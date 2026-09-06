@@ -3,6 +3,9 @@ from lxml import etree
 
 # Errors: 
 # 1. For some reason, element.bounding_box().left procudes a scalar, top produces a tuple 'left=-0.00029229975262476393, top=(0.0,) '
+# TODOs: 
+# 1. In the cases I testes with one gradient for two objects, Inkscape seems to have copied the gradient by the time the extension ran. 
+# I must look into this, how this is intended to be handled, maybe better create a copy inside the extension, to be safe. 
 
 class CenterGradients(inkex.EffectExtension):
 
@@ -62,7 +65,17 @@ class CenterGradients(inkex.EffectExtension):
                 f"center_x={center_x}, center_y={center_y}"
             )
 
+            """  Manipulate the object's gradient:  """
             self.msg("Output: ...")
+
+            # if radial gradient:
+                # center it
+                # center its focal point
+                # remove its transformation
+
+            if gradient.tag != inkex.addNS("radialGradient", "svg"): 
+                self.msg("Not a radial gradient, skipping")
+                continue 
 
             # Center the gradient's center point and focal point, setting it to the object's center. 
             gradient.set("cx", str(center_x))
@@ -73,10 +86,10 @@ class CenterGradients(inkex.EffectExtension):
             # Delete the Transformation Matrix, which centers the gradient and resets the handles
             gradient.attrib.pop("gradientTransform", None)
 
-
-            self.msg(f"Gradient attributes: ")
+            # Show all relevant values again: 
+            self.msg(f"Gradient attributes after manipulation: ")
             for key, value in gradient.attrib.items(): 
-                self.msg(f"  {key} = {value}")
+                self.msg(f"  new  {key} = {value}")
 
 
             # helper point to indicate the middle 
