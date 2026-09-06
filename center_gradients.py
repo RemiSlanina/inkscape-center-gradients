@@ -33,6 +33,8 @@ class CenterGradients(inkex.EffectExtension):
             # use gradient id to find it using inkex
             gradient = self.svg.getElementById(gradient_id)
 
+            # fx and fy specify the focal point of a radial gradient.
+            # For a normal centered radial gradient, they usually match cx and cy.
             self.msg(f"Gradient element: {gradient.tag}")
             self.msg(f"cx={gradient.get('cx')}")
             self.msg(f"cy={gradient.get('cy')}")
@@ -42,13 +44,16 @@ class CenterGradients(inkex.EffectExtension):
             self.msg(f"gradientUnits={gradient.get('gradientUnits')}")
             self.msg(f"gradientTransform={gradient.get('gradientTransform')}")
 
+            self.msg(f"Gradient attributes: ")
+            for key, value in gradient.attrib.items(): 
+                self.msg(f"  {key} = {value}")
+
             self.msg(f"Fill: {style.get('fill')}")
             # bounding box has the transformed, rotated or nested object, better than directly reading cx, cy, rx, ry.
             bbox = element.bounding_box() 
             center_x = bbox.left + bbox.width / 2 
             center_y = bbox.top + bbox.height / 2 
             
-
             self.msg(
                 f"left={bbox.left}, top={bbox.top,} "
                 f"width={bbox.width}, height={bbox.height}"
@@ -57,12 +62,29 @@ class CenterGradients(inkex.EffectExtension):
                 f"center_x={center_x}, center_y={center_y}"
             )
 
+            self.msg("Output: ...")
+
+            # Center the gradient's center point and focal point, setting it to the object's center. 
+            gradient.set("cx", str(center_x))
+            gradient.set("cy", str(center_y))
+            gradient.set("fx", str(center_x))
+            gradient.set("fy", str(center_y))
+
+            # Delete the Transformation Matrix, which centers the gradient and resets the handles
+            gradient.attrib.pop("gradientTransform", None)
+
+
+            self.msg(f"Gradient attributes: ")
+            for key, value in gradient.attrib.items(): 
+                self.msg(f"  {key} = {value}")
+
+
             # helper point to indicate the middle 
-            marker = inkex.Circle()
-            marker.set("cx", str(center_x))
-            marker.set("cy", str(center_y))
-            marker.set("r", "1")
-            self.svg.get_current_layer().append(marker)
+            # marker = inkex.Circle()
+            # marker.set("cx", str(center_x))
+            # marker.set("cy", str(center_y))
+            # marker.set("r", "1")
+            # self.svg.get_current_layer().append(marker)
 
             
 
