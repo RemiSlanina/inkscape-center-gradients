@@ -2,6 +2,9 @@
 
 > WIP: An experimental Inkscape extension for centering radial gradients on selected objects.
 
+Core function I want to achieve:
+Group several objects assign one (1) gradient to the group the extension should center them all to their objects, and scale them accordingly. Which it does, surprisingly.
+
 ## Current state
 
 - Finds selected objects.
@@ -10,10 +13,18 @@
 - Skips linear gradients.
 - Calculates the object's bounding-box center.
 - Sets `cx`, `cy`, `fx`, and `fy` to the object's center.
-- Removes `gradientTransform`.
+
+- centers radial gradients
+- resets focal point
+- removes previous gradient transform
+- normalizes the gradient radius to 1
+- reconstructs gradientTransform from object geometry
+- works on individual selected objects
+- linear gradients are skipped
+- groups are not yet recursively processed
 - Works on multiple selected objects.
+
 - Currently operates on directly selected objects, not the individual objects inside a selected group.
-- Gradient radius is not yet automatically adjusted for all objects.
 
 ## Next steps
 
@@ -36,3 +47,8 @@ Output something like
 ![Screenshot 1](/assets/screenshots/early-screenshot-1.png)
 -->
 ![Screenshot 2](/assets/screenshots/early-screenshot-2.png)
+
+## Next steps
+
+- work on groups (without prior ungrouping)
+- make another version that changes colors while preserving edits to gradients (scaling, rotating, ...)

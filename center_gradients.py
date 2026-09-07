@@ -1,11 +1,19 @@
 import inkex
 from lxml import etree
 
+# Core function I want to achieve: 
+# Group several objects
+# assign one (1) gradient to the group 
+# the extension should center them all to their objects, and scale them accordingly 
+# resetting to object center: works but currently needs ungrouping ✔️ 
+# scaled gradient: pending  ✖️  (gradient currently gets resized to former parent object) update: works in experiment 2d ✔️  
+
 # Errors: 
 # 1. For some reason, element.bounding_box().left procudes a scalar, top produces a tuple 'left=-0.00029229975262476393, top=(0.0,) '
 # TODOs: 
 # 1. In the cases I testes with one gradient for two objects, Inkscape seems to have copied the gradient by the time the extension ran. 
 # I must look into this, how this is intended to be handled, maybe better create a copy inside the extension, to be safe. 
+# 2. Oops, the attribute is: gradientTransform, not gradientTransformation. Must fix this. 
 
 class CenterGradients(inkex.EffectExtension):
 
@@ -82,9 +90,68 @@ class CenterGradients(inkex.EffectExtension):
             gradient.set("cy", str(center_y))
             gradient.set("fx", str(center_x))
             gradient.set("fy", str(center_y))
-
-            # Delete the Transformation Matrix, which centers the gradient and resets the handles
+            # removing the matrix seems a necessary step, otherwise, 
+            # # the resetting to center points is not performed correctly (wrong scale -> wrong coordinate)
             gradient.attrib.pop("gradientTransform", None)
+
+            # Experiment 1
+            # Delete the Transformation Matrix, which centers the gradient and resets the handles
+            # only run: gradient.attrib.pop("gradientTransform", None): 
+            #gradient.attrib.pop("gradientTransform", None) # -> correctly places each gradient to the center point 
+            # of their object, but scales the handles up to the size of the original (grouped) object, which is wrong for some parts. 
+            # it should be set to the default size of the child object it belongs to (like, width/2 and height/2)
+
+            # Experiment 2
+            # #Replace the gradientTransform with the reset and scaled one
+
+            # Experiment 2a
+            # # This requires normalizing the radius to 1 
+            # gradient.set("r", "1") # nope that doesn't work 
+            # # scale gradient handles: 
+            # gradient.set(
+            #     "gradientTransformation", 
+            #     f"matrix({bbox.width/2} 0 0 {bbox.height/2} {center_x} {center_y})"
+            # ) # -> correctly places each gradient to the center point 
+            # of their object, but scales the handles all he way down now, which is wrong. 
+            # note that gradient.attrib.pop("gradientTransform", None) is necessar to run before. 
+
+            # Experiment 2b
+            # #Replace the gradientTransform with the reset and scaled one
+            # This requires normalizing the radius to 1 
+            # gradient.set("r", "1") # nope that doesn't work 
+            # # scale gradient handles: 
+            # gradient.set(
+            #     "gradientTransformation", 
+            #     f"matrix({1} 0 0 {1} 0 0)"
+            # ) # same as above 
+
+            # # Experiment 2c 
+            # # # Replace the gradientTransform with the reset and scaled one
+            # gradient.set("r", str(bbox.width/2))
+            # radius = float(gradient.get("r"))
+            # self.msg(f"radius saved as: {radius}")
+            # gradient.set(
+            #                 "gradientTransformation", 
+            #                 f"matrix({bbox.width/2/radius} 0 0 {bbox.height/2/radius} {center_x} {center_y} )"
+            #             ) 
+
+
+            # Experiment 2d 🥴🎉
+            rx = bbox.width / 2
+            ry = bbox.height / 2
+
+            gradient.set("cx", "0")
+            gradient.set("cy", "0")
+            gradient.set("fx", "0")
+            gradient.set("fy", "0")
+            gradient.set("r", "1")
+
+            gradient.set(
+                "gradientTransform",
+                f"matrix({rx} 0 0 {ry} {center_x} {center_y})"
+            ) # This one produces the desired result. 
+
+            
 
             # Show all relevant values again: 
             self.msg(f"Gradient attributes after manipulation: ")
